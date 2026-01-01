@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
@@ -12,31 +14,42 @@ class AuthController extends Controller
 {
     public function register(Request $request) {
         $request->validate([
-            'name' => 'required|string|max: 200',
+            'name' => 'required|string|max:200',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|digits:9',
+            'phone' => 'required|digits:10|unique:users,phone',
             'password' => 'required|min:6',
             'pin' => 'required|digits:5'
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'pin' => Hash::make($request->pin)
-        ]);
+        $result = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'pin' => Hash::make($request->pin)
+            ]);
+
+            $wallet = Wallet::create([
+                'user_id' => $user->id,
+            ]);
+
+            return [
+                'user' => $user,
+                'wallet' => $wallet->refresh()
+            ];
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'user' => $user
+            'data' => $result
         ]);
     }
 
     public function login(Request $request) {
         $credentials = $request->validate([
-            'phone' => 'required|digits:9',
+            'phone' => 'required|digits:10',
             'password' => 'required'
         ]);
 
