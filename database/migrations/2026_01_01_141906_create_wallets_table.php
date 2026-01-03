@@ -13,12 +13,10 @@ return new class extends Migration
     {
         Schema::create('wallets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
+            $table->unsignedBigInteger('user_id')->unique();
             $table->decimal('balance', 10, 2)->default(0);
             $table->tinyInteger('status')->comment('1=active,2=suspended,3=closed')->default(1);
             $table->timestamps();
-
-            $table->unique('user_id');
         });
     }
 
