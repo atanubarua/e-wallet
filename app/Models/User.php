@@ -55,4 +55,8 @@ class User extends Authenticatable
     public function findForPassport(string $phone, Client $client) {
         return $this->where('phone', $phone)->first();
     }
+
+    public function wallet() {
+        return $this->hasOne(Wallet::class);
+    }
 }
